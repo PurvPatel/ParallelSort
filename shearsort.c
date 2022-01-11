@@ -28,10 +28,10 @@ int number_of_phases(int n);
 void *row_and_column_sort(void *args);
 
 
-int main(){
+int main(int argc, char *argv[]){
 
 	//read mesh array from input file and assign values to global variables N and num_of_phases
-	int *test = read_mesh_array("lab3_array.txt");
+	int *test = read_mesh_array(argv[1]);
 	num_of_phases = number_of_phases(N * N);
 
 	//print initial read array
