@@ -1,5 +1,5 @@
 # Shearsort 
-
+ A distributed/parallel sorting algorithm for 2-dimensional arrays of size n by n
 ## Usage
   - complile with `gcc shearsort.c -pthread` on any terminal
   - run `./a.out [textfile where array data is stored]`
