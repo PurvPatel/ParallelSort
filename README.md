@@ -63,5 +63,12 @@ After Phase 5
 16 15 14 13
 ```
 
-## Notes
- - Needs to be optimized; currently using array of semaphores which needs to be replaced by a condition variable for synchronizing between phases
+## Todos
+  - Use better sorting algorithm for worker threads (currently using bubble sort)
+  - make file
+
+## Future Ideas
+  - move to message passing concurrency and try to make algorithm distributed (running it on multiple machines). Challenges:
+    - Lots of data to share between channels.
+    - entry/exit of machines during running process (what if worker thread dies? nhow to redistribute work?)
+    
