@@ -9,8 +9,10 @@ int N, num_of_phases;
 
 //global variables for concurrency logic
 pthread_mutex_t worker_count_mutex = PTHREAD_MUTEX_INITIALIZER;
-sem_t *semaphores;
+pthread_cond_t phase_sync_cond;
+
 int worker_count = 0;
+int cur_phase = 0;
 
 //arguements for sorting worker threads
 struct arg_struct{
@@ -42,11 +44,8 @@ int main(int argc, char *argv[]){
 		printf("\n");
 	}
 
-	//Initialize N semaphores for sorting worker threads concurrency logic
-	semaphores = (sem_t *) malloc(sizeof(sem_t) * N);
-	for(int i = 0; i < N; i++){
-		sem_init(semaphores + i, 0, 1);
-	}
+	//Initialize condition variable to sync phases
+  pthread_cond_init(&phase_sync_cond, NULL);
 
 	//create N threads along with arguements
 	pthread_t sorting_threads[N];
@@ -62,9 +61,11 @@ int main(int argc, char *argv[]){
 	for(int i = 0; i < N; i++)
 		pthread_join(sorting_threads[i], NULL);
 
-	//free array and semaphore memory space
-	free(semaphores);
+	//free array and condition variable
 	free(test);
+  pthread_cond_destroy(&phase_sync_cond);
+  
+  pthread_exit(NULL);
 }
 
 int *read_mesh_array(const char *file_name){
@@ -114,8 +115,11 @@ void *row_and_column_sort(void *args){
 	for(int i = 0; i < num_of_phases; i++){
 
 		//concurrency logic: have to wait for all threads to finish a phase before starting the next one
-		sem_wait(semaphores + row_or_col_num - 1);
 		pthread_mutex_lock(&worker_count_mutex);
+    if(cur_phase < i)
+    {
+      pthread_cond_wait(&phase_sync_cond, &worker_count_mutex);
+    }
 		worker_count++;
 		pthread_mutex_unlock(&worker_count_mutex);
 		
@@ -168,15 +172,15 @@ void *row_and_column_sort(void *args){
 		pthread_mutex_lock(&worker_count_mutex);
 		if(worker_count == N){
 			worker_count = 0;
-			printf("\nAfter Phase %d\n\n", i + 1);
+      cur_phase += 1;
+      printf("\nAfter Phase %d\n\n", i + 1);
 			for(k = 0; k < N; k++){
 				for(j = 0; j < N; j++)
 					printf("%d ", arr[k * N + j]);
 				printf("\n");
 			}
-			for(int l = 0; l < N; l++)
-				sem_post(semaphores + l);
-		}
+		  pthread_cond_broadcast(&phase_sync_cond);
+    }
 		pthread_mutex_unlock(&worker_count_mutex);
 	}
 
